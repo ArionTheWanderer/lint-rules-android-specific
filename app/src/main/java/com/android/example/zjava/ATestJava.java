@@ -1,4 +1,4 @@
-package com.android.example.java;
+package com.android.example.zjava;
 
 public class ATestJava extends SuperTestJava {
     private double third;

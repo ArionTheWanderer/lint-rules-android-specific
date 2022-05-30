@@ -14,8 +14,6 @@ import java.util.stream.Collectors
 
 class MimUsageDetector: Detector(), Detector.UastScanner {
 
-    private val number = 4
-
     override fun getApplicableUastTypes() = listOf<Class<out UElement>>(UMethod::class.java)
 
     override fun createUastHandler(context: JavaContext) = object: UElementHandler() {
@@ -47,7 +45,7 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
                     doesNotUseThisExpression = $doesNotUseThisExpression,
                     doesNotUseSuperExpression = $doesNotUseSuperExpression
                 """.trimIndent()
-                reportUsage(context, node, debugMessage)
+                reportUsage(context, node)
             }
         }
 
@@ -126,21 +124,28 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
                     val isInClass = PsiTreeUtil.isAncestor(node.containingClass, resolvedPsiElement, true)
                     if (isInClass || isInInheritedClass(resolvedPsiElement)) {
                         var parentReference = PsiTreeUtil.getParentOfType(refExpression.toUElementOfType<UExpression>()?.sourcePsi, KtDotQualifiedExpression::class.java)
-                        var flag = true
-                        while (flag) {
-                            val possibleNextReference = PsiTreeUtil.findChildOfType(parentReference.toUElementOfType<UElement>()?.sourcePsi, KtDotQualifiedExpression::class.java)
-                            if (possibleNextReference != null) {
-                                parentReference = possibleNextReference
-                            } else {
-                                flag = false
+                        if (parentReference != null) {
+                            var flag = true
+                            while (flag) {
+                                val possibleNextReference = PsiTreeUtil.findChildOfType(parentReference.toUElementOfType<UElement>()?.sourcePsi, KtDotQualifiedExpression::class.java)
+                                if (possibleNextReference != null) {
+                                    parentReference = possibleNextReference
+                                } else {
+                                    flag = false
+                                }
                             }
-                        }
-                        val possibleParam = PsiTreeUtil.findChildOfType(parentReference.toUElementOfType<UElement>()?.sourcePsi, KtNameReferenceExpression::class.java)
-                        val possibleParamReferenceName = possibleParam?.getReferencedName()
-                        val resolvedPossibleParamPsiElement =
-                            possibleParam.toUElementOfType<UReferenceExpression>()?.resolve()
-                        if (resolvedPossibleParamPsiElement != null) {
-                            val isInMethod = PsiTreeUtil.isAncestor(node.javaPsi, resolvedPossibleParamPsiElement, true)
+                            val possibleParam = PsiTreeUtil.findChildOfType(parentReference.toUElementOfType<UElement>()?.sourcePsi, KtNameReferenceExpression::class.java)
+                            val possibleParamReferenceName = possibleParam?.getReferencedName()
+                            val resolvedPossibleParamPsiElement =
+                                possibleParam.toUElementOfType<UReferenceExpression>()?.resolve()
+                            if (resolvedPossibleParamPsiElement != null) {
+                                val isInMethod = PsiTreeUtil.isAncestor(node.javaPsi, resolvedPossibleParamPsiElement, true)
+                                if (!isInMethod) {
+                                    return false
+                                }
+                            }
+                        } else {
+                            val isInMethod = PsiTreeUtil.isAncestor(node.javaPsi, resolvedPsiElement, true)
                             if (!isInMethod) {
                                 return false
                             }

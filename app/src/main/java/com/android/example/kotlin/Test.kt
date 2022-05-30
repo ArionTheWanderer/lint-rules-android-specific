@@ -1,6 +1,6 @@
 package com.android.example.kotlin
 
-class ATest(val firstTest: String, var secondTest: Int): SuperTest(firstTest, secondTest) {
+class Test(val firstTest: String, var secondTest: Int): SuperTest(firstTest, secondTest) {
     var third: Double = 1.0
 
     fun dotFun(superTest: SuperTest) {
