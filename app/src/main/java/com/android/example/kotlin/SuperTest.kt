@@ -1,5 +1,8 @@
 package com.android.example.kotlin
 
+import java.io.*;
+import java.lang.*;
+
 class MyDataStructure(val first: String = "first", val second: Int = 2)
 
 open class SuperTest(val first: String, var second: Int) {

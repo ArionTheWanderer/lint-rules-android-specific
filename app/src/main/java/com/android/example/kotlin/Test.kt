@@ -1,5 +1,8 @@
 package com.android.example.kotlin
 
+import java.io.*;
+import java.lang.*;
+
 class Test(val firstTest: String, var secondTest: Int): SuperTest(firstTest, secondTest) {
     var third: Double = 1.0
 

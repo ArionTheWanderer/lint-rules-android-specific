@@ -6,36 +6,61 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category.Companion.PERFORMANCE
 import com.android.tools.lint.detector.api.Severity.WARNING
 import com.intellij.psi.*
+
+
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getStartOffsetIn
+import org.jetbrains.kotlin.psi.psiUtil.pureEndOffset
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi2ir.pureEndOffsetOrUndefined
 import org.jetbrains.uast.*
 import java.lang.IllegalArgumentException
 import java.util.stream.Collectors
 
-class MimUsageDetector: Detector(), Detector.UastScanner {
+class MimUsageDetector : Detector(), Detector.UastScanner {
 
     override fun getApplicableUastTypes() = listOf<Class<out UElement>>(UMethod::class.java)
 
-    override fun createUastHandler(context: JavaContext) = object: UElementHandler() {
+    override fun createUastHandler(context: JavaContext) = object : UElementHandler() {
 
         override fun visitMethod(node: UMethod) {
             val evaluator = context.evaluator
+
+//            val importList = PsiTreeUtil.findChildrenOfType(node.containingFile.toUElementOfType<UFile>()?.sourcePsi, KtImportList::class.java).elementAt(0)
+//            val importStartOffset = importList.startOffset
+//            val importEndOffset = importList.endOffset
+//            val importStartOffsetInParent = importList.startOffsetInParent
+//            val importStartOffsetInAncestor = importList.getStartOffsetIn(node.containingFile)
+//
+//            val classStartOffset = node.containingClass?.startOffset
+//            val classEndOffset = node.containingClass?.endOffset
+//            val classStartOffsetInParent = node.containingClass?.startOffsetInParent
+//            val classOffsetInAncestor = node.containingClass?.getStartOffsetIn(node.containingFile)
+
             val containingClass = node.javaPsi.containingClass
-            val allFieldsNames = containingClass?.allFields?.toList()?.stream()?.map { field -> field.name }?.collect(Collectors.toList()) ?: listOf()
-            val allMethodsNames = containingClass?.allMethods?.toList()?.stream()?.map { method -> method.name }?.collect(Collectors.toList()) ?: listOf()
+            val allFieldsNames =
+                containingClass?.allFields?.toList()?.stream()?.map { field -> field.name }
+                    ?.collect(Collectors.toList()) ?: listOf()
+            val allMethodsNames =
+                containingClass?.allMethods?.toList()?.stream()?.map { method -> method.name }
+                    ?.collect(Collectors.toList()) ?: listOf()
 
             val isNotConstructor = !node.isConstructor
             val statementsCount = (node.uastBody as? UBlockExpression)?.expressions?.size ?: 0
             val hasNonEmptyBody = node.uastBody != null && statementsCount > 0
             val isNonStatic = !node.isStatic
             val isNotOverride = !evaluator.isOverride(node, true)
-            val hasNotInternalMemberInvocation = hasNotInternalMemberInvocation(evaluator, node, allFieldsNames, allMethodsNames)
+            val hasNotInternalMemberInvocation =
+                hasNotInternalMemberInvocation(evaluator, node, allFieldsNames, allMethodsNames)
             val doesNotUseThisExpression = doesNotUseThisExpression(node)
             val doesNotUseSuperExpression = doesNotUseSuperExpression(node)
 
 //            LintFix
             if (isNotConstructor && hasNonEmptyBody && isNonStatic && isNotOverride
-                && hasNotInternalMemberInvocation && doesNotUseThisExpression && doesNotUseSuperExpression) {
+                && hasNotInternalMemberInvocation && doesNotUseThisExpression && doesNotUseSuperExpression
+            ) {
                 val debugMessage = """
                     isNotConstructor = $isNotConstructor,
                     hasNonEmptyBody = $hasNonEmptyBody,
@@ -75,7 +100,8 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
             }
 
             if (isJava(node.sourcePsi)) {
-                val refExpressions = PsiTreeUtil.findChildrenOfType(node.javaPsi, PsiReferenceExpression::class.java)
+                val refExpressions =
+                    PsiTreeUtil.findChildrenOfType(node.javaPsi, PsiReferenceExpression::class.java)
                 for (refExpression in refExpressions) {
                     val referenceName = refExpression.referenceName ?: ""
                     val resolvedPsiElement = refExpression.resolve() ?: continue
@@ -86,12 +112,14 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
                     if (resolvedMethod != null && resolvedMethod.isStatic) {
                         continue
                     }
-                    val isInClass = PsiTreeUtil.isAncestor(node.containingClass, resolvedPsiElement, true)
+                    val isInClass =
+                        PsiTreeUtil.isAncestor(node.containingClass, resolvedPsiElement, true)
                     if (isInClass || isInInheritedClass(resolvedPsiElement)) {
                         var nextReference: PsiReferenceExpression = refExpression
                         var flag = true
                         while (flag) {
-                            val possibleNextReference = nextReference.firstChild as? PsiReferenceExpression
+                            val possibleNextReference =
+                                nextReference.firstChild as? PsiReferenceExpression
                             if (possibleNextReference != null) {
                                 nextReference = possibleNextReference
                             } else {
@@ -100,7 +128,8 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
                         }
                         val nextResolvedElement = nextReference.resolve()
                         if (nextResolvedElement != null) {
-                            val isInMethod = PsiTreeUtil.isAncestor(node.javaPsi, nextResolvedElement, true)
+                            val isInMethod =
+                                PsiTreeUtil.isAncestor(node.javaPsi, nextResolvedElement, true)
                             if (!isInMethod) {
                                 return false
                             }
@@ -108,7 +137,10 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
                     }
                 }
             } else if (isKotlin(node.sourcePsi)) {
-                val refExpressions = PsiTreeUtil.findChildrenOfType(node.sourcePsi, KtNameReferenceExpression::class.java)
+                val refExpressions = PsiTreeUtil.findChildrenOfType(
+                    node.sourcePsi,
+                    KtNameReferenceExpression::class.java
+                )
                 for (refExpression in refExpressions) {
                     val referenceName = refExpression.getReferencedName()
                     val resolvedPsiElement =
@@ -121,31 +153,46 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
                     if (resolvedMethod != null && resolvedMethod.isStatic) {
                         continue
                     }
-                    val isInClass = PsiTreeUtil.isAncestor(node.containingClass, resolvedPsiElement, true)
+                    val isInClass =
+                        PsiTreeUtil.isAncestor(node.containingClass, resolvedPsiElement, true)
                     if (isInClass || isInInheritedClass(resolvedPsiElement)) {
-                        var parentReference = PsiTreeUtil.getParentOfType(refExpression.toUElementOfType<UExpression>()?.sourcePsi, KtDotQualifiedExpression::class.java)
+                        var parentReference = PsiTreeUtil.getParentOfType(
+                            refExpression.toUElementOfType<UExpression>()?.sourcePsi,
+                            KtDotQualifiedExpression::class.java
+                        )
                         if (parentReference != null) {
                             var flag = true
                             while (flag) {
-                                val possibleNextReference = PsiTreeUtil.findChildOfType(parentReference.toUElementOfType<UElement>()?.sourcePsi, KtDotQualifiedExpression::class.java)
+                                val possibleNextReference = PsiTreeUtil.findChildOfType(
+                                    parentReference.toUElementOfType<UElement>()?.sourcePsi,
+                                    KtDotQualifiedExpression::class.java
+                                )
                                 if (possibleNextReference != null) {
                                     parentReference = possibleNextReference
                                 } else {
                                     flag = false
                                 }
                             }
-                            val possibleParam = PsiTreeUtil.findChildOfType(parentReference.toUElementOfType<UElement>()?.sourcePsi, KtNameReferenceExpression::class.java)
+                            val possibleParam = PsiTreeUtil.findChildOfType(
+                                parentReference.toUElementOfType<UElement>()?.sourcePsi,
+                                KtNameReferenceExpression::class.java
+                            )
                             val possibleParamReferenceName = possibleParam?.getReferencedName()
                             val resolvedPossibleParamPsiElement =
                                 possibleParam.toUElementOfType<UReferenceExpression>()?.resolve()
                             if (resolvedPossibleParamPsiElement != null) {
-                                val isInMethod = PsiTreeUtil.isAncestor(node.javaPsi, resolvedPossibleParamPsiElement, true)
+                                val isInMethod = PsiTreeUtil.isAncestor(
+                                    node.javaPsi,
+                                    resolvedPossibleParamPsiElement,
+                                    true
+                                )
                                 if (!isInMethod) {
                                     return false
                                 }
                             }
                         } else {
-                            val isInMethod = PsiTreeUtil.isAncestor(node.javaPsi, resolvedPsiElement, true)
+                            val isInMethod =
+                                PsiTreeUtil.isAncestor(node.javaPsi, resolvedPsiElement, true)
                             if (!isInMethod) {
                                 return false
                             }
@@ -163,7 +210,8 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
         private fun doesNotUseThisExpression(node: UMethod): Boolean {
             val sourcePsi = node.sourcePsi
             if (isJava(sourcePsi)) {
-                val expressions = PsiTreeUtil.findChildrenOfType(node.javaPsi, PsiExpression::class.java)
+                val expressions =
+                    PsiTreeUtil.findChildrenOfType(node.javaPsi, PsiExpression::class.java)
                 for (expression in expressions) {
                     val thisExpression = expression.toUElementOfType<UThisExpression>()
                     if (thisExpression != null) {
@@ -171,7 +219,8 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
                     }
                 }
             } else if (isKotlin(sourcePsi)) {
-                val thisExpressions = PsiTreeUtil.findChildrenOfType(node.sourcePsi, KtThisExpression::class.java)
+                val thisExpressions =
+                    PsiTreeUtil.findChildrenOfType(node.sourcePsi, KtThisExpression::class.java)
                 if (thisExpressions.isNotEmpty()) {
                     return false
                 }
@@ -183,7 +232,8 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
         private fun doesNotUseSuperExpression(node: UMethod): Boolean {
             val sourcePsi = node.sourcePsi
             if (isJava(sourcePsi)) {
-                val expressions = PsiTreeUtil.findChildrenOfType(node.javaPsi, PsiExpression::class.java)
+                val expressions =
+                    PsiTreeUtil.findChildrenOfType(node.javaPsi, PsiExpression::class.java)
                 for (expression in expressions) {
                     val superExpression = expression.toUElementOfType<USuperExpression>()
                     if (superExpression != null) {
@@ -191,7 +241,8 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
                     }
                 }
             } else if (isKotlin(sourcePsi)) {
-                val superExpressions = PsiTreeUtil.findChildrenOfType(node.sourcePsi, KtSuperExpression::class.java)
+                val superExpressions =
+                    PsiTreeUtil.findChildrenOfType(node.sourcePsi, KtSuperExpression::class.java)
                 if (superExpressions.isNotEmpty()) {
                     return false
                 }
@@ -202,9 +253,56 @@ class MimUsageDetector: Detector(), Detector.UastScanner {
     }
 
     private fun reportUsage(context: JavaContext, node: UMethod) {
+        val lintFix: LintFix
+        if (isJava(node.sourcePsi)) {
+            lintFix =
+                fix()
+                    .name("static modifier for ${node.name}")
+                    .family("static modifier for method")
+                    .replace()
+                    .range(context.getLocation(node.modifierList))
+                    .end()
+                    .with(" static")
+                    .autoFix()
+                    .reformat(true)
+                    .build()
+        } else if (isKotlin(node.sourcePsi)) {
+//            val importList = PsiTreeUtil.findChildrenOfType(node.containingFile.toUElementOfType<UFile>()?.sourcePsi, KtImportList::class.java).elementAt(0)
+//            val startOffset = importList.startOffsetInParent
+//            val dsd = importList.startOffset
+            // (node.containingFile) + 1
+//            context.getRangeLocation()
+
+            lintFix =
+                fix()
+                    .name("static modifier for ${node.name}")
+                    .family("static modifier for method")
+                    .composite(
+                        fix()
+                            .replace()
+                            .range(context.getLocation(node))
+                            .all()
+                            .with(null)
+                            .reformat(true)
+                            .autoFix()
+                            .build(),
+                        fix()
+                            .replace()
+                            .range(context.getLocation(node))
+                            .end()
+                            .with(" ${node.sourcePsi?.text}")
+                            .reformat(true)
+                            .autoFix()
+                            .build()
+                    )
+                    .autoFix()
+        } else {
+            throw IllegalArgumentException("Method can only analyze Java or Kotlin psi elements")
+        }
         val incident = Incident(context, ISSUE_MIM_USAGE)
-            .message( "[3]${node.name} method should have 'static' modifier")
+            .message("[3]${node.name} method should have 'static' modifier")
             .at(node)
+            .fix(lintFix)
         context.report(incident)
     }
 

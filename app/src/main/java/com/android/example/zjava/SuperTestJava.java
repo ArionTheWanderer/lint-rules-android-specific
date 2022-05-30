@@ -12,7 +12,9 @@ public class SuperTestJava {
         this.second = second;
     }
 
-    public void firstFunJava(){}
+    int firstFunJava() {
+        return 3;
+    }
 
     public int secondFunJava() {
         second += 1;
