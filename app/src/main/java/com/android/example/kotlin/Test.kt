@@ -1,31 +1,38 @@
 package com.android.example.kotlin
 
-import java.io.*;
-import java.lang.*;
+import android.os.PowerManager
 
-class Test(val firstTest: String, var secondTest: Int): SuperTest(firstTest, secondTest) {
+fun dotFun(superTest: SuperTest): Int {
+    return superTest.protectedInt.first.first.length
+}
+
+const val staticInt = 4
+
+class Test(val firstTest: String, var secondTest: Int, val wlMine: PowerManager.WakeLock): SuperTest(firstTest, secondTest, wlMine) {
     var third: Double = 1.0
 
-    fun dotFun(superTest: SuperTest) {
-        superTest.protectedInt.first.first.length
-        superTest.protectedInt.second.second.minus(2)
-    }
-
-    constructor(firstTest: String, secondTest: Int, third: Double) : this(firstTest, secondTest) {
+    constructor(firstTest: String, secondTest: Int, third: Double, wlMine: PowerManager.WakeLock) : this(firstTest, secondTest, wlMine) {
         this.third = third
     }
 
     override fun firstFun() {
+        val qwe = MyDataStructure().first.length
+        val qwe2 = MyDataStructure().first.first().inc()
         this.third += 1.0
         super.firstFun()
     }
 
     override fun secondFun(): Int {
+        val obj = Object()
         val superReturned = super.secondFun()
         return superReturned + 2
     }
 
     fun thirdFun(param: String): String {
         return param + ""
+    }
+
+    companion object {
+        const val staticCompanionInt = 5
     }
 }

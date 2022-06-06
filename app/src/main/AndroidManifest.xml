@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.example">
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
-    <!-- Not a real app, just a skeleton to show code depending
-	 on library with lint checks producing errors in the report -->
+    <application>
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+    </application>
 
 </manifest>

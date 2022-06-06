@@ -16,7 +16,6 @@
 package com.example.lint.checks
 
 import com.android.tools.lint.client.api.IssueRegistry
-import com.android.tools.lint.client.api.Vendor
 import com.android.tools.lint.detector.api.CURRENT_API
 
 /*
@@ -24,7 +23,11 @@ import com.android.tools.lint.detector.api.CURRENT_API
  */
 @Suppress("UnstableApiUsage")
 class SampleIssueRegistry : IssueRegistry() {
-    override val issues = listOf(SampleCodeDetector.ISSUE, MimUsageDetector.ISSUE_MIM_USAGE)
+    override val issues = listOf(
+//        SampleCodeDetector.ISSUE,
+//        MimUsageDetector.ISSUE_MIM_USAGE,
+        DwDetector.ISSUE_DURABLE_WAKELOCK
+    )
 
     override val api: Int
         get() = CURRENT_API

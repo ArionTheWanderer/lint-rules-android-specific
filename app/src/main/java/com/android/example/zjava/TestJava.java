@@ -2,11 +2,18 @@ package com.android.example.zjava;
 
 import java.lang.System;
 
-public class ATestJava extends SuperTestJava {
+public class TestJava extends SuperTestJava {
     private double third;
+
+    public static int staticInt = 4;
+
+    public String thirdFun(String param) {
+        return param + "";
+    }
 
     public int dotFunJava(SuperTestJava superTestJava) {
         superTestJava.myDataStructure.secondString.toLowerCase();
+        superTestJava.superString.toLowerCase().charAt(2);
         System.out.println();
         return myDataStructure.firstInt;
     }
@@ -17,11 +24,11 @@ public class ATestJava extends SuperTestJava {
         return myDataStructure.firstInt;
     }
 
-    ATestJava(String firstTest, int secondTest) {
+    TestJava(String firstTest, int secondTest) {
         super(firstTest, secondTest);
     }
 
-    ATestJava(String firstTest, int secondTest, double third) {
+    TestJava(String firstTest, int secondTest, double third) {
         this(firstTest, secondTest);
         this.third = third;
     }
@@ -37,10 +44,6 @@ public class ATestJava extends SuperTestJava {
         int superInt = superFun();
         int superReturned = super.secondFunJava();
         return superReturned + superInt + 2;
-    }
-
-    public final String thirdFun(String param) {
-        return param + "";
     }
 
     public static void staticFunc() {
