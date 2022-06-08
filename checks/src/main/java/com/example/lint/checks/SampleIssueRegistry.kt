@@ -26,7 +26,9 @@ class SampleIssueRegistry : IssueRegistry() {
     override val issues = listOf(
 //        SampleCodeDetector.ISSUE,
 //        MimUsageDetector.ISSUE_MIM_USAGE,
-        DwDetector.ISSUE_DURABLE_WAKELOCK
+//        DwDetector.ISSUE_DURABLE_WAKELOCK,
+//        IdsDetector.ISSUE_INEFFICIENT_DATA_STRUCTURE,
+        IgsDetector.ISSUE_INTERNAL_GETTER_SETTER
     )
 
     override val api: Int

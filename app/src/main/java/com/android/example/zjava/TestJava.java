@@ -1,6 +1,7 @@
 package com.android.example.zjava;
 
 import java.lang.System;
+import java.util.HashMap;
 
 public class TestJava extends SuperTestJava {
     private double third;
@@ -31,6 +32,7 @@ public class TestJava extends SuperTestJava {
     TestJava(String firstTest, int secondTest, double third) {
         this(firstTest, secondTest);
         this.third = third;
+        HashMap   < Integer, Object > hm = new HashMap<>();
     }
 
 //    public void firstFunJava() {

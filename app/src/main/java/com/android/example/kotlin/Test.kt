@@ -15,7 +15,7 @@ class Test(val firstTest: String, var secondTest: Int, val wlMine: PowerManager.
         this.third = third
     }
 
-    override fun firstFun() {
+    override fun firstFun(): Unit {
         val qwe = MyDataStructure().first.length
         val qwe2 = MyDataStructure().first.first().inc()
         this.third += 1.0

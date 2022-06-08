@@ -10,16 +10,11 @@ import com.intellij.psi.*
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.getStartOffsetIn
-import org.jetbrains.kotlin.psi.psiUtil.pureEndOffset
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.psi2ir.pureEndOffsetOrUndefined
 import org.jetbrains.uast.*
 import java.lang.IllegalArgumentException
 import java.util.stream.Collectors
 
-class MimUsageDetector : Detector(), Detector.UastScanner {
+class MimDetector : Detector(), Detector.UastScanner {
 
     override fun getApplicableUastTypes() = listOf<Class<out UElement>>(UMethod::class.java)
 
@@ -299,7 +294,7 @@ class MimUsageDetector : Detector(), Detector.UastScanner {
         } else {
             throw IllegalArgumentException("Method can only analyze Java or Kotlin psi elements")
         }
-        val incident = Incident(context, ISSUE_MIM_USAGE)
+        val incident = Incident(context, ISSUE_MEMBER_IGNORING_METHOD)
             .message("[3]${node.name} method should have 'static' modifier")
             .at(node)
             .fix(lintFix)
@@ -307,7 +302,7 @@ class MimUsageDetector : Detector(), Detector.UastScanner {
     }
 
     private fun reportUsage(context: JavaContext, node: UMethod, debugMessage: String) {
-        val incident = Incident(context, ISSUE_MIM_USAGE)
+        val incident = Incident(context, ISSUE_MEMBER_IGNORING_METHOD)
             .message(debugMessage)
             .at(node)
         context.report(incident)
@@ -315,12 +310,12 @@ class MimUsageDetector : Detector(), Detector.UastScanner {
 
     companion object {
         @JvmField
-        val ISSUE_MIM_USAGE = Issue.create(
+        val ISSUE_MEMBER_IGNORING_METHOD = Issue.create(
             "Mim",
             "Non-static method that doesn't access any property.",
             "Make the method static.",
             PERFORMANCE, 5, WARNING,
-            Implementation(MimUsageDetector::class.java, Scope.JAVA_FILE_SCOPE)
+            Implementation(MimDetector::class.java, Scope.JAVA_FILE_SCOPE)
         )
     }
 
