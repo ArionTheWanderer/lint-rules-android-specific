@@ -2,9 +2,11 @@ package com.example.lint.checks
 
 import com.android.tools.lint.client.api.UElementHandler
 import com.android.tools.lint.detector.api.*
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.*
 
-class IgsDetector : Detector(), Detector.UastScanner {
+class IsDetector : Detector(), Detector.UastScanner {
 
     override fun getApplicableUastTypes() =
         listOf<Class<out UElement>>(UClass::class.java)
@@ -25,32 +27,31 @@ class IgsDetector : Detector(), Detector.UastScanner {
 //                UExpression - Represents an expression or statement (which is considered as an expression in Uast).
                 val fieldName = field.name
                 val expressions = (method.uastBody as? UBlockExpression)?.expressions ?: return false
-                for (expression in expressions) {
-                    val binaryExpression = expression as? UBinaryExpression
-                    val leftOperand = binaryExpression?.leftOperand
-                    val rightOperand = binaryExpression?.rightOperand
-                    val operatorIdentifier = binaryExpression?.operator
-                    if (operatorIdentifier !is UastBinaryOperator.AssignOperator) {
-                        continue
+                if (expressions.size != 1) {
+                    return false
+                }
+                val expression = expressions[0]
+                val binaryExpression = expression as? UBinaryExpression ?: return false
+                val leftOperand = binaryExpression.leftOperand
+                val rightOperand = binaryExpression.rightOperand
+                val operatorIdentifier = binaryExpression.operator
+                if (operatorIdentifier !is UastBinaryOperator.AssignOperator) {
+                    return false
+                }
+                if (rightOperand.toString() != fieldName)  {
+                    return false
+                }
+                if (leftOperand.toString() == fieldName) {
+                    return true
+                } else {
+                    if (leftOperand !is UReferenceExpression) {
+                        return false
                     }
-                    if (rightOperand.toString() != fieldName)  {
-                        continue
-                    }
-                    if (leftOperand.toString() == fieldName) {
-                        return true
-                    } else {
-                        if (leftOperand !is UReferenceExpression) {
-                            continue
-                        }
-                        val leftOperandSource = leftOperand.resolve() ?: continue
+                    val leftOperandSource = leftOperand.resolve() ?: return false
 
-                        val leftOperandField = leftOperandSource.toUElementOfType<UField>()
-                        val leftOperandFieldKotlin = leftOperandSource.toUElementOfType<UMethod>()?.sourcePsi.toUElementOfType<UField>()
-                        if (leftOperandField != null && leftOperandField == field) {
-                            return true
-                        } else if (leftOperandFieldKotlin != null && (leftOperandFieldKotlin == field)) {
-                            return true
-                        }
+                    val leftOperandField = leftOperandSource.toUElementOfType<UField>()
+                    if (leftOperandField != null && leftOperandField == field) {
+                        return true
                     }
                 }
                 return false
@@ -85,6 +86,9 @@ class IgsDetector : Detector(), Detector.UastScanner {
                 return setterToFieldPairs
             }
 
+            if (!isJava(node.sourcePsi)) {
+                return
+            }
 
             val fields = node.fields
             val setterToFieldPairs = getSetters(fields.toList())
@@ -93,33 +97,29 @@ class IgsDetector : Detector(), Detector.UastScanner {
                 if (classMethod.isStatic) {
                     continue
                 }
-                val methodExpressions = (classMethod.uastBody as? UBlockExpression)?.expressions ?: continue
+                val methodExpressions = PsiTreeUtil.findChildrenOfType(classMethod.javaPsi, PsiMethodCallExpression::class.java)
                 for (methodExpression in methodExpressions) {
-                    if (methodExpression !is UCallExpression) {
-                        continue
-                    }
-                    val methodReferenceSource = methodExpression.resolve() ?: continue
+                    val methodReferenceSource = methodExpression.methodExpression.resolve() ?: continue
                     val resolvedMethod = methodReferenceSource.toUElementOfType<UMethod>() ?: continue
                     for (setterToFieldPair in setterToFieldPairs) {
                         if (setterToFieldPair.first == resolvedMethod) {
                             // TODO report
-                            print("Igs has been found")
+                            print("Is has been found")
                         }
                     }
                 }
             }
-
         }
     }
 
     companion object {
         @JvmField
-        val ISSUE_INTERNAL_GETTER_SETTER = Issue.create(
-            "Internal Getter/Setter",
-            "Internal fields are accessed via getters and setters. That increases memory consumption.",
-            "Consider accessing the fields directly and only use getters and setters in public API.",
+        val ISSUE_INTERNAL_SETTER = Issue.create(
+            "Internal Setter",
+            "Internal field is accessed via setter. That increases memory consumption.",
+            "Consider accessing the field directly and only use setter in public API.",
             Category.PERFORMANCE, 5, Severity.WARNING,
-            Implementation(IgsDetector::class.java, Scope.JAVA_FILE_SCOPE)
+            Implementation(IsDetector::class.java, Scope.JAVA_FILE_SCOPE)
         )
         private const val VOID = "void"
     }

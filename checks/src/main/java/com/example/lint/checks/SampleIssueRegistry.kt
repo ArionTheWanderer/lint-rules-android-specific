@@ -28,7 +28,8 @@ class SampleIssueRegistry : IssueRegistry() {
 //        MimUsageDetector.ISSUE_MIM_USAGE,
 //        DwDetector.ISSUE_DURABLE_WAKELOCK,
 //        IdsDetector.ISSUE_INEFFICIENT_DATA_STRUCTURE,
-        IgsDetector.ISSUE_INTERNAL_GETTER_SETTER
+//        IsDetector.ISSUE_INTERNAL_SETTER,
+        IgDetector.ISSUE_INTERNAL_GETTER
     )
 
     override val api: Int

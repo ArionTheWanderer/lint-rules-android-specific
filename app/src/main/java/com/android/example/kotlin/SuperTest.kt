@@ -27,5 +27,5 @@ open class SuperTest(val first: String, var second: Int, val wlFieldParam: Power
         return second
     }
 
-    fun expressionBodyInt() = ""
+    fun expressionBodyInt() = first
 }
