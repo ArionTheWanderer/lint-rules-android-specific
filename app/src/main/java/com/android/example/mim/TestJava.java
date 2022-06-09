@@ -1,4 +1,4 @@
-package com.android.example.zjava;
+package com.android.example.mim;
 
 import java.lang.System;
 import java.util.HashMap;

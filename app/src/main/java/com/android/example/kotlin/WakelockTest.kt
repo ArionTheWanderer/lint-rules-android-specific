@@ -16,7 +16,7 @@ open class WakelockTest(val wlFieldParam: PowerManager.WakeLock) {
     }
 
     fun wlParamFunRelease(wlParam: PowerManager.WakeLock) {
-        wlParam.acquire()
+        wlParam.acquire(10*60*1000L /*10 minutes*/)
         wlParam.release()
     }
 
@@ -24,7 +24,6 @@ open class WakelockTest(val wlFieldParam: PowerManager.WakeLock) {
         val wlLocal = Wakelock()
         wlLocal.acquire()
     }
-
 
     fun wlLocalReleaseFun() {
         val wlLocal = Wakelock()

@@ -1,4 +1,4 @@
-package com.android.example.kotlin
+package com.android.example.mim
 
 import android.os.PowerManager
 import java.lang.*;

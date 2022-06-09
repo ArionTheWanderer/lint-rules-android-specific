@@ -250,16 +250,18 @@ class MimDetector : Detector(), Detector.UastScanner {
     private fun reportUsage(context: JavaContext, node: UMethod) {
         val lintFix: LintFix
         if (isJava(node.sourcePsi)) {
+            val newMethodText = "static ${node.text}"
+//            val methodSignature = node.getSignature(PsiSubstitutor.EMPTY)
+//            val newMethodSignatureString = "static ${methodSignature.name}"
             lintFix =
                 fix()
                     .name("static modifier for ${node.name}")
                     .family("static modifier for method")
                     .replace()
-                    .range(context.getLocation(node.modifierList))
-                    .end()
-                    .with(" static")
+                    .range(context.getLocation(node))
+                    .all()
+                    .with(newMethodText)
                     .autoFix()
-                    .reformat(true)
                     .build()
         } else if (isKotlin(node.sourcePsi)) {
 //            val importList = PsiTreeUtil.findChildrenOfType(node.containingFile.toUElementOfType<UFile>()?.sourcePsi, KtImportList::class.java).elementAt(0)
@@ -278,14 +280,14 @@ class MimDetector : Detector(), Detector.UastScanner {
                             .range(context.getLocation(node))
                             .all()
                             .with(null)
-                            .reformat(true)
+//                            .reformat(true)
                             .autoFix()
                             .build(),
                         fix()
                             .replace()
-                            .range(context.getLocation(node))
+                            .range(context.getLocation(node.containingFile))
                             .end()
-                            .with(" ${node.sourcePsi?.text}")
+                            .with(node.sourcePsi?.text)
                             .reformat(true)
                             .autoFix()
                             .build()

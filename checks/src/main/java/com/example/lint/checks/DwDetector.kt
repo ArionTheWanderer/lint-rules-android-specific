@@ -10,22 +10,19 @@ import java.lang.IllegalArgumentException
 
 class DwDetector : Detector(), Detector.UastScanner {
 
-    data class WlFieldStructure(
-        val uField: UField,
-        var isAcquired: Boolean = false,
-        var isReleased: Boolean = false
-    )
+    data class MutablePair(var acquireInvocation: UCallExpression? = null, var releaseInvocation: UCallExpression? = null)
 
     // stores data for an analyze, then releases
-    private val wlFieldsMap = mutableMapOf<String, MutableMap<String, WlFieldStructure>>()
+    private val wlFieldsMap: MutableMap<String, MutableMap<String, MutableMap<UMethod, MutablePair>>> = mutableMapOf()
 
 
     override fun afterCheckFile(context: Context) {
         for ((clazz, map) in wlFieldsMap.entries) {
-            for ((fieldName, wlFieldStructure) in map.entries) {
-                if (wlFieldStructure.isAcquired && !wlFieldStructure.isReleased) {
-                    // TODO report
-                    println("ЕСТЬ!")
+            for ((fieldName, methodInvocationsMap) in map.entries) {
+                for ((method, acquireReleasePair) in methodInvocationsMap.entries) {
+                    if (acquireReleasePair.acquireInvocation != null && acquireReleasePair.releaseInvocation == null) {
+                        reportUsage(context, acquireReleasePair.acquireInvocation!!, method)
+                    }
                 }
             }
         }
@@ -49,7 +46,7 @@ class DwDetector : Detector(), Detector.UastScanner {
                     if (wlFieldsMap[wlClass] == null) {
                         wlFieldsMap[wlClass] = mutableMapOf()
                     }
-                    wlFieldsMap[wlClass]?.set(wlFieldName, WlFieldStructure(field))
+                    wlFieldsMap[wlClass]?.set(wlFieldName, mutableMapOf())
                 }
             }
         }
@@ -109,11 +106,14 @@ class DwDetector : Detector(), Detector.UastScanner {
 
                         val clazz = node.containingClass?.toUElementOfType<UClass>()?.qualifiedName ?: continue
                         val wlFieldStructure = wlFieldsMap[clazz]?.get(wlField.name)
-                            ?: throw IllegalArgumentException("Where da feeld?")
+                            ?: continue
+                        if (wlFieldStructure[node] == null) {
+                            wlFieldStructure[node] = MutablePair()
+                        }
                         if (callName.equals(ACQUIRE)) {
-                            wlFieldStructure.isAcquired = true
+                            wlFieldStructure[node]?.acquireInvocation = methodCall.toUElementOfType()
                         } else if (callName.equals(RELEASE)) {
-                            wlFieldStructure.isReleased = true
+                            wlFieldStructure[node]?.releaseInvocation = methodCall.toUElementOfType()
                         }
                         continue
 
@@ -138,6 +138,8 @@ class DwDetector : Detector(), Detector.UastScanner {
                             continue
                         }
 
+                        var isReleased = false
+
                         for ((indexInternal, methodCallInternal) in methodCalls.withIndex()) {
                             if (indexInternal <= index) {
                                 continue
@@ -161,13 +163,17 @@ class DwDetector : Detector(), Detector.UastScanner {
                             val dataComparison = wlLocalVariableInternal == wlLocalVariable
                             if (refComparison || dataComparison) {
                                 if (callNameInternal.equals(RELEASE)) {
+                                    isReleased = true
                                     break
                                 }
                             }
 
                         }
-                        // TODO report
-                        println("ЕСТЬ!")
+                        if (isReleased) {
+                            continue
+                        }
+                        methodCall.toUElementOfType<UCallExpression>()
+                            ?.let { reportUsage(context, it, node) } ?: println("Can't cast $callName method to UCallExpression")
                     } else if (wlParameter != null) {
 
                         if (!callName.equals(ACQUIRE)) {
@@ -188,6 +194,8 @@ class DwDetector : Detector(), Detector.UastScanner {
                         if (!isInMethod) {
                             continue
                         }
+
+                        var isReleased = false
 
                         for ((indexInternal, methodCallInternal) in methodCalls.withIndex()) {
                             if (indexInternal <= index) {
@@ -212,14 +220,17 @@ class DwDetector : Detector(), Detector.UastScanner {
                             val dataComparison = wlParameterInternal == wlParameter
                             if (refComparison || dataComparison) {
                                 if (callNameInternal.equals(RELEASE)) {
+                                    isReleased = true
                                     break
                                 }
                             }
 
                         }
-                        // TODO report
-                        println("ЕСТЬ!")
-
+                        if (isReleased) {
+                            continue
+                        }
+                        methodCall.toUElementOfType<UCallExpression>()
+                            ?.let { reportUsage(context, it, node) } ?: println("Can't cast $callName method to UCallExpression")
                     } else {
                         continue
                     }
@@ -365,20 +376,23 @@ class DwDetector : Detector(), Detector.UastScanner {
                                 continue
                             }
 
-                            // TODO report
                             println("ЕСТЬ!")
+                            callExpression.toUElementOfType<UCallExpression>()
+                                ?.let { reportUsage(context, it, node) } ?: println("Can't cast $callName method to UCallExpression")
                         } else if (isInClass) {
-
                             val clazz = node.containingClass?.toUElementOfType<UClass>()?.qualifiedName ?: continue
                             val wlFieldStructure = wlFieldsMap[clazz]?.get(sourceName)
                                 ?: continue
+
+                            if (wlFieldStructure[node] == null) {
+                                wlFieldStructure[node] = MutablePair()
+                            }
                             if (callName.equals(ACQUIRE_KT)) {
-                                wlFieldStructure.isAcquired = true
+                                wlFieldStructure[node]?.acquireInvocation = callExpression.toUElementOfType()
                             } else if (callName.equals(RELEASE_KT)) {
-                                wlFieldStructure.isReleased = true
+                                wlFieldStructure[node]?.releaseInvocation = callExpression.toUElementOfType()
                             }
                             continue
-
                         }
 
                     }
@@ -390,6 +404,31 @@ class DwDetector : Detector(), Detector.UastScanner {
 //            PsiMethodCallExpression
 //            KtCallExpression
         }
+    }
+
+    private fun reportUsage(context: Context, acquireInvocation: UCallExpression, node: UMethod) {
+
+        val acquireInvocationText = acquireInvocation.sourcePsi?.text
+
+        val newAcquireInvocationText = acquireInvocationText?.substring(0, acquireInvocationText.length - 2) + "10*60*1000L)"
+
+        val durableWakelockFix = fix()
+            .name("Set timeout to acquire invocation in ${node.name} method")
+            .family("Set timeout to acquire invocation")
+            .replace()
+            .range(context.getLocation(acquireInvocation))
+            .all()
+            .with(newAcquireInvocationText)
+            .reformat(true)
+            .autoFix()
+            .build()
+
+
+        val incident = Incident(context, ISSUE_DURABLE_WAKELOCK)
+            .message("Release the WakeLock.")
+            .at(acquireInvocation)
+            .fix(durableWakelockFix)
+        context.report(incident)
     }
 
     companion object {

@@ -33,6 +33,8 @@ public class AIgsTestJava {
         System.out.println("qwerty");
         setFirstJava("qwerty");
         setSecondJava(1337);
+        int arg = 3;
+        setSecondJava(arg);
     }
 
     public static void staticMethod() {

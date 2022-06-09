@@ -1,4 +1,4 @@
-package com.android.example.kotlin
+package com.android.example.mim
 
 import android.os.PowerManager
 
@@ -15,12 +15,18 @@ class Test(val firstTest: String, var secondTest: Int, val wlMine: PowerManager.
         this.third = third
     }
 
-    override fun firstFun(): Unit {
+    override fun firstFun() {
         val qwe = MyDataStructure().first.length
         val qwe2 = MyDataStructure().first.first().inc()
-        this.third += 1.0
-        super.firstFun()
     }
+
+    fun staticCandidate(): Int {
+        return 2
+    }
+
+    fun staticCandidate2() = 2
+
+    fun staticCandidate3(param: String) = println(param)
 
     override fun secondFun(): Int {
         val obj = Object()
