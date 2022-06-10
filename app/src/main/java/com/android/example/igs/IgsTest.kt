@@ -1,4 +1,4 @@
-package com.android.example.aigs
+package com.android.example.igs
 
 class IgsTest(private var first: String, var second: Int) {
     fun voidFun() {

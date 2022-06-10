@@ -144,7 +144,7 @@ class IsDetector : Detector(), Detector.UastScanner {
             "Internal Setter",
             "Internal field is accessed via setter. That increases memory consumption.",
             "Consider accessing the field directly and only use setter in public API.",
-            Category.PERFORMANCE, 5, Severity.WARNING,
+            ConstantHolder.ANDROID_QUALITY_SMELLS, 5, Severity.WARNING,
             Implementation(IsDetector::class.java, Scope.JAVA_FILE_SCOPE)
         )
         private const val VOID = "void"

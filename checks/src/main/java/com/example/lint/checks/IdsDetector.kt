@@ -15,16 +15,10 @@ class IdsDetector : Detector(), Detector.UastScanner {
     override fun createUastHandler(context: JavaContext) = object : UElementHandler() {
 
         override fun visitClass(node: UClass) {
-//            KtClass
-            context.evaluator
-//            UastVisitor
-//            Map
-//            HashMap
-//            MutableMap
             val fields = node.fields
             for (field in fields) {
                 val fieldClassType = field.type.accept(IdsTypeVisitor()) ?: continue
-                // TODO report
+                reportUsage(context, field)
                 println("Field")
             }
         }
@@ -33,36 +27,66 @@ class IdsDetector : Detector(), Detector.UastScanner {
             if (isJava(node.sourcePsi)) {
                 val localVars = PsiTreeUtil.findChildrenOfType(node.javaPsi, PsiLocalVariable::class.java)
                 val params = node.uastParameters
+                val returnType = node.returnType
                 for (localVar in localVars) {
                     val localVarClassType = localVar.type.accept(IdsTypeVisitor()) ?: continue
-
-                    // TODO report
+                    val localVarUElement = localVar.toUElementOfType<UElement>()
+                    if (localVarUElement != null) {
+                        reportUsage(context, localVarUElement)
+                    }
                     println("LocalVarJava")
                 }
                 for (param in params) {
                     val paramClassType = param.type.accept(IdsTypeVisitor()) ?: continue
 
-                    // TODO report
+                    reportUsage(context, param)
                     println("ParamJava")
                 }
+                val returnClassType = returnType?.accept(IdsTypeVisitor())
+                if (returnClassType != null) {
+                    val returnTypeElement = node.returnTypeElement.toUElementOfType<UElement>()
+                    if (returnTypeElement != null) {
+                        reportUsage(context, returnTypeElement)
+                    }
+                    println("ReturnType")
+                }
             } else if (isKotlin(node.sourcePsi)) {
+                val uField = node.sourcePsi.toUElementOfType<UField>()
+                if (uField != null) {
+                    return
+                }
                 val localVars = PsiTreeUtil.findChildrenOfType(node.sourcePsi, KtProperty::class.java)
                 val params = node.uastParameters
+                val returnType = node.returnType
                 for (localVar in localVars) {
-                    val localVarClassType = localVar.toUElementOfType<ULocalVariable>()?.type?.accept(IdsTypeVisitor()) ?: continue
-
-                    // TODO report
+                    val localUVar = localVar.toUElementOfType<UVariable>()
+                    val localVarClassType = localUVar?.type?.accept(IdsTypeVisitor()) ?: continue
+                    reportUsage(context, localUVar)
                     println("LocalVar")
                 }
                 for (param in params) {
                     val paramClassType = param.type.accept(IdsTypeVisitor()) ?: continue
-
-                    // TODO report
+                    reportUsage(context, param)
                     println("Param")
+                }
+                val returnClassType = returnType?.accept(IdsTypeVisitor())
+                if (returnClassType != null) {
+                   val returnTypeElement = node.returnTypeReference
+                    if (returnTypeElement != null) {
+                        reportUsage(context, returnTypeElement)
+                    }
+                    println("ReturnType")
                 }
             }
         }
 
+    }
+
+    private fun reportUsage(context: JavaContext, node: UElement) {
+        val incident = Incident(context, MimDetector.ISSUE_MEMBER_IGNORING_METHOD)
+            .message("Replace with SparseArray")
+            .at(node)
+        context.report(incident)
     }
 
     class IdsTypeVisitor: PsiTypeVisitor<PsiClassType?>() {
@@ -79,8 +103,13 @@ class IdsDetector : Detector(), Detector.UastScanner {
             }
 
             val parameters = classType.parameters
-            val intParameter = parameters[0] as? PsiClassType
-            if (intParameter != null && intParameter.hasParameters()) {
+            if (parameters[0] !is PsiClassType) {
+                return null
+            }
+
+            val intParameter = parameters[0] as PsiClassType
+
+            if (intParameter.hasParameters()) {
                 return null
             }
 
@@ -151,7 +180,7 @@ class IdsDetector : Detector(), Detector.UastScanner {
             "Inefficient data structure",
             "The use of HashMap<Integer, Object> is slow.",
             "Use SparseArray instead.",
-            Category.PERFORMANCE, 5, Severity.WARNING,
+            ConstantHolder.ANDROID_QUALITY_SMELLS, 5, Severity.WARNING,
             Implementation(IdsDetector::class.java, Scope.JAVA_FILE_SCOPE)
         )
         private const val MUTABLE_HASHMAP = "MutableHashMap"

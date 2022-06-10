@@ -4,7 +4,6 @@ import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.PowerManager
-import com.android.example.R
 
 class MainActivity : AppCompatActivity() {
 

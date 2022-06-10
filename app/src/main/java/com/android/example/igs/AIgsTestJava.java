@@ -1,4 +1,4 @@
-package com.android.example.aigs;
+package com.android.example.igs;
 
 public class AIgsTestJava {
 

@@ -1,15 +1,14 @@
-package com.android.example.kotlin
+package com.android.example.dw
 
 import android.os.PowerManager
 
-class Wakelock {
-    fun acquire() {}
-    fun release() {}
-}
-
 open class WakelockTest(val wlFieldParam: PowerManager.WakeLock) {
 
-    val wlField = Wakelock()
+    lateinit var wlField: PowerManager.WakeLock
+
+    init {
+
+    }
 
     fun wlParamFun(wlParam: PowerManager.WakeLock) {
         wlParam.acquire()
@@ -32,7 +31,7 @@ open class WakelockTest(val wlFieldParam: PowerManager.WakeLock) {
     }
 
     fun wlFieldFun() {
-        wlField.acquire()
+        wlField.acquire() // ?
     }
 
     fun wlFieldReleaseFun() {
@@ -47,5 +46,10 @@ open class WakelockTest(val wlFieldParam: PowerManager.WakeLock) {
     fun wlFieldParamReleaseFun() {
         wlFieldParam.acquire()
         wlFieldParam.release()
+    }
+
+    inner class Wakelock {
+        fun acquire() {}
+        fun release() {}
     }
 }

@@ -6,7 +6,6 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
-import java.lang.IllegalArgumentException
 
 class DwDetector : Detector(), Detector.UastScanner {
 
@@ -17,11 +16,12 @@ class DwDetector : Detector(), Detector.UastScanner {
 
 
     override fun afterCheckFile(context: Context) {
-        for ((clazz, map) in wlFieldsMap.entries) {
-            for ((fieldName, methodInvocationsMap) in map.entries) {
+        for ((_, map) in wlFieldsMap.entries) {
+            for ((_, methodInvocationsMap) in map.entries) {
                 for ((method, acquireReleasePair) in methodInvocationsMap.entries) {
-                    if (acquireReleasePair.acquireInvocation != null && acquireReleasePair.releaseInvocation == null) {
-                        reportUsage(context, acquireReleasePair.acquireInvocation!!, method)
+                    val acquireInvocation = acquireReleasePair.acquireInvocation
+                    if (acquireInvocation != null && acquireReleasePair.releaseInvocation == null) {
+                        reportUsage(context, acquireInvocation, method)
                     }
                 }
             }
@@ -33,13 +33,14 @@ class DwDetector : Detector(), Detector.UastScanner {
 
     override fun createUastHandler(context: JavaContext) = object : UElementHandler() {
 
+        override fun visitInitializer(node: UClassInitializer) {
+
+        }
+
         override fun visitClass(node: UClass) {
-            // node.allFields?
             val fields = node.fields
             for (field in fields) {
-                if (field.type.equalsToText(POWER_MANAGER_WAKELOCK) ||
-                    field.type.equalsToText(MY_DATA_STRUCTURE) ||
-                    field.type.equalsToText(MY_DATA_STRUCTURE_KT)) {
+                if (field.type.equalsToText(POWER_MANAGER_WAKELOCK)) {
                     val wlClass = node.qualifiedName ?: continue
                     val wlFieldName = field.name
 
@@ -52,20 +53,15 @@ class DwDetector : Detector(), Detector.UastScanner {
         }
 
         override fun visitMethod(node: UMethod) {
-
-//            fun hasPowerManagerWakelockType(expression: PsiReferenceExpression): Boolean {
-//                val classFields = node.containingClass?.fields
-//                val localVariables = PsiTreeUtil.findChildrenOfType(node.javaPsi, PsiLocalVariable::class.java)
-//                if ((classFields != null && classFields.isEmpty()) && (localVariables.isEmpty())) {
-//                    return false
-//                }
-//
-//                return false
-//            }
-            // TODO случай вызова acquire на методе newWakeLock() (проверка поля/переменной на тип)
+//            KtClassBody
+//            KtBlockExpression
             if (isJava(node.sourcePsi)) {
                 val methodCalls = PsiTreeUtil.findChildrenOfType(node.javaPsi, PsiMethodCallExpression::class.java)
                 for ((index, methodCall) in methodCalls.withIndex()) {
+                    val parentBlock = PsiTreeUtil.getParentOfType(methodCall, PsiCodeBlock::class.java)
+                    val lBrace = parentBlock?.lBrace
+                    val rBrace = parentBlock?.rBrace
+
                     val methodExpression = methodCall.methodExpression
                     val callName = methodExpression.referenceName
                     if (!methodCall.argumentList.isEmpty || !callName.equals(ACQUIRE) && !callName.equals(RELEASE)) {
@@ -89,9 +85,7 @@ class DwDetector : Detector(), Detector.UastScanner {
 
                     if (wlField != null) {
 
-                        if (!wlField.type.equalsToText(POWER_MANAGER_WAKELOCK) &&
-                            !wlField.type.equalsToText(MY_DATA_STRUCTURE) &&
-                            !wlField.type.equalsToText(MY_DATA_STRUCTURE_KT)) {
+                        if (!wlField.type.equalsToText(POWER_MANAGER_WAKELOCK)) {
                             continue
                         }
 
@@ -123,9 +117,7 @@ class DwDetector : Detector(), Detector.UastScanner {
                             continue
                         }
 
-                        if (!wlLocalVariable.type.equalsToText(POWER_MANAGER_WAKELOCK) &&
-                            !wlLocalVariable.type.equalsToText(MY_DATA_STRUCTURE) &&
-                            !wlLocalVariable.type.equalsToText(MY_DATA_STRUCTURE_KT)) {
+                        if (!wlLocalVariable.type.equalsToText(POWER_MANAGER_WAKELOCK)) {
                             continue
                         }
 
@@ -180,9 +172,7 @@ class DwDetector : Detector(), Detector.UastScanner {
                             continue
                         }
 
-                        if (!wlParameter.type.equalsToText(POWER_MANAGER_WAKELOCK) &&
-                            !wlParameter.type.equalsToText(MY_DATA_STRUCTURE) &&
-                            !wlParameter.type.equalsToText(MY_DATA_STRUCTURE_KT)) {
+                        if (!wlParameter.type.equalsToText(POWER_MANAGER_WAKELOCK)) {
                             continue
                         }
 
@@ -238,10 +228,12 @@ class DwDetector : Detector(), Detector.UastScanner {
             } else if (isKotlin(node.sourcePsi)) {
                 val callExpressions = PsiTreeUtil.findChildrenOfType(node.sourcePsi, KtCallExpression::class.java)
                 for ((index, callExpression) in callExpressions.withIndex()) {
-//                    val uCallExpression = callExpression as? UCallExpression ?: continue
+                    val parentBlock = PsiTreeUtil.getParentOfType(callExpression, KtBlockExpression::class.java)
+                    val lBrace = parentBlock?.lBrace
+                    val rBrace = parentBlock?.rBrace
+
                     val callName = callExpression.text
                     val argumentsCount = callExpression.valueArguments.size
-//                    !methodCall.argumentList.isEmpty && (!callName.equals(ACQUIRE) || !callName.equals(RELEASE))
                     if ((argumentsCount > 0) ||
                         !callName.equals(ACQUIRE_KT) &&
                                 !callName.equals(RELEASE_KT)) {
@@ -262,9 +254,6 @@ class DwDetector : Detector(), Detector.UastScanner {
 
                     val wlReference = wl.toUElementOfType<UReferenceExpression>()
                     val wlSource = wlReference?.resolve() ?: continue
-
-                    // KtParameter - в первичном конструкторе и в методе
-                    // KtProperty - локальные и класса
 
                     val wlLocalVariableSource = wlSource.toUElementOfType<ULocalVariable>()?.sourcePsi
                     val wlParameterSource = wlSource.toUElementOfType<UParameter>()?.sourcePsi
@@ -318,7 +307,6 @@ class DwDetector : Detector(), Detector.UastScanner {
 
                         var isReleased = false
 
-                        // TODO inner method case
                         if (isInMethod) {
 
                             if (!callName.equals(ACQUIRE_KT)) {
@@ -376,7 +364,6 @@ class DwDetector : Detector(), Detector.UastScanner {
                                 continue
                             }
 
-                            println("ЕСТЬ!")
                             callExpression.toUElementOfType<UCallExpression>()
                                 ?.let { reportUsage(context, it, node) } ?: println("Can't cast $callName method to UCallExpression")
                         } else if (isInClass) {
@@ -398,19 +385,19 @@ class DwDetector : Detector(), Detector.UastScanner {
                     }
                 }
             }
-
-//            UCallExpression
-//            PsiCallExpression
-//            PsiMethodCallExpression
-//            KtCallExpression
         }
     }
 
     private fun reportUsage(context: Context, acquireInvocation: UCallExpression, node: UMethod) {
+        val receiverText = acquireInvocation.receiver?.sourcePsi?.text ?: ""
+        val acquireInvocationText: String? = if (receiverText != "") {
+            "$receiverText.${acquireInvocation.methodName}"
+        } else {
+            acquireInvocation.methodName
+        }
 
-        val acquireInvocationText = acquireInvocation.sourcePsi?.text
 
-        val newAcquireInvocationText = acquireInvocationText?.substring(0, acquireInvocationText.length - 2) + "10*60*1000L)"
+        val newAcquireInvocationText = "$acquireInvocationText(10*60*1000L)"
 
         val durableWakelockFix = fix()
             .name("Set timeout to acquire invocation in ${node.name} method")
@@ -425,7 +412,7 @@ class DwDetector : Detector(), Detector.UastScanner {
 
 
         val incident = Incident(context, ISSUE_DURABLE_WAKELOCK)
-            .message("Release the WakeLock.")
+            .message("Release the WakeLock in 10 minutes.")
             .at(acquireInvocation)
             .fix(durableWakelockFix)
         context.report(incident)
@@ -436,8 +423,8 @@ class DwDetector : Detector(), Detector.UastScanner {
         val ISSUE_DURABLE_WAKELOCK = Issue.create(
             "Durable Wakelock",
             "WakeLock won't be released.",
-            "Release the WakeLock with release()",
-            Category.PERFORMANCE, 5, Severity.WARNING,
+            "Set timeout to acquire() invocation",
+            ConstantHolder.ANDROID_QUALITY_SMELLS, 5, Severity.WARNING,
             Implementation(DwDetector::class.java, Scope.JAVA_FILE_SCOPE)
         )
         private const val ACQUIRE = "acquire"
@@ -445,8 +432,6 @@ class DwDetector : Detector(), Detector.UastScanner {
         private const val RELEASE = "release"
         private const val RELEASE_KT = "release()"
         private const val POWER_MANAGER_WAKELOCK = "android.os.PowerManager.WakeLock"
-        private const val MY_DATA_STRUCTURE = "com.android.example.dw.WakelockTestJava.Wakelock"
-        private const val MY_DATA_STRUCTURE_KT = "com.android.example.dw.Wakelock"
     }
 
 }

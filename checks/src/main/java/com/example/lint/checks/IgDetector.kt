@@ -126,7 +126,7 @@ class IgDetector : Detector(), Detector.UastScanner {
             "Internal Getter",
             "Internal field is accessed via getter. That increases memory consumption.",
             "Consider accessing the field directly and only use getter in public API.",
-            Category.PERFORMANCE, 5, Severity.WARNING,
+            ConstantHolder.ANDROID_QUALITY_SMELLS, 5, Severity.WARNING,
             Implementation(IgDetector::class.java, Scope.JAVA_FILE_SCOPE)
         )
         private const val VOID = "void"

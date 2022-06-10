@@ -56,15 +56,15 @@ class MimDetector : Detector(), Detector.UastScanner {
             if (isNotConstructor && hasNonEmptyBody && isNonStatic && isNotOverride
                 && hasNotInternalMemberInvocation && doesNotUseThisExpression && doesNotUseSuperExpression
             ) {
-                val debugMessage = """
-                    isNotConstructor = $isNotConstructor,
-                    hasNonEmptyBody = $hasNonEmptyBody,
-                    isNonStatic = $isNonStatic,
-                    isNotOverride = $isNotOverride,
-                    hasNotInternalMemberInvocation = $hasNotInternalMemberInvocation,
-                    doesNotUseThisExpression = $doesNotUseThisExpression,
-                    doesNotUseSuperExpression = $doesNotUseSuperExpression
-                """.trimIndent()
+//                val debugMessage = """
+//                    isNotConstructor = $isNotConstructor,
+//                    hasNonEmptyBody = $hasNonEmptyBody,
+//                    isNonStatic = $isNonStatic,
+//                    isNotOverride = $isNotOverride,
+//                    hasNotInternalMemberInvocation = $hasNotInternalMemberInvocation,
+//                    doesNotUseThisExpression = $doesNotUseThisExpression,
+//                    doesNotUseSuperExpression = $doesNotUseSuperExpression
+//                """.trimIndent()
                 reportUsage(context, node)
             }
         }
@@ -248,6 +248,7 @@ class MimDetector : Detector(), Detector.UastScanner {
     }
 
     private fun reportUsage(context: JavaContext, node: UMethod) {
+        val incident: Incident
         val lintFix: LintFix
         if (isJava(node.sourcePsi)) {
             val newMethodText = "static ${node.text}"
@@ -263,6 +264,10 @@ class MimDetector : Detector(), Detector.UastScanner {
                     .with(newMethodText)
                     .autoFix()
                     .build()
+            incident = Incident(context, ISSUE_MEMBER_IGNORING_METHOD)
+                .message("${node.name} method should have 'static' modifier")
+                .at(node)
+                .fix(lintFix)
         } else if (isKotlin(node.sourcePsi)) {
 //            val importList = PsiTreeUtil.findChildrenOfType(node.containingFile.toUElementOfType<UFile>()?.sourcePsi, KtImportList::class.java).elementAt(0)
 //            val startOffset = importList.startOffsetInParent
@@ -272,8 +277,8 @@ class MimDetector : Detector(), Detector.UastScanner {
 
             lintFix =
                 fix()
-                    .name("static modifier for ${node.name}")
-                    .family("static modifier for method")
+                    .name("Move ${node.name} method out of the class")
+                    .family("Move method out of the class")
                     .composite(
                         fix()
                             .replace()
@@ -293,30 +298,31 @@ class MimDetector : Detector(), Detector.UastScanner {
                             .build()
                     )
                     .autoFix()
+            incident = Incident(context, ISSUE_MEMBER_IGNORING_METHOD)
+                .message("${node.name} method should be moved out of the class")
+                .at(node)
+                .fix(lintFix)
         } else {
             throw IllegalArgumentException("Method can only analyze Java or Kotlin psi elements")
         }
-        val incident = Incident(context, ISSUE_MEMBER_IGNORING_METHOD)
-            .message("[3]${node.name} method should have 'static' modifier")
-            .at(node)
-            .fix(lintFix)
+
         context.report(incident)
     }
 
-    private fun reportUsage(context: JavaContext, node: UMethod, debugMessage: String) {
-        val incident = Incident(context, ISSUE_MEMBER_IGNORING_METHOD)
-            .message(debugMessage)
-            .at(node)
-        context.report(incident)
-    }
+//    private fun reportUsage(context: JavaContext, node: UMethod, debugMessage: String) {
+//        val incident = Incident(context, ISSUE_MEMBER_IGNORING_METHOD)
+//            .message(debugMessage)
+//            .at(node)
+//        context.report(incident)
+//    }
 
     companion object {
         @JvmField
         val ISSUE_MEMBER_IGNORING_METHOD = Issue.create(
-            "Mim",
+            "Member-ignoring method",
             "Non-static method that doesn't access any property.",
             "Make the method static.",
-            PERFORMANCE, 5, WARNING,
+            ConstantHolder.ANDROID_QUALITY_SMELLS, 5, WARNING,
             Implementation(MimDetector::class.java, Scope.JAVA_FILE_SCOPE)
         )
     }

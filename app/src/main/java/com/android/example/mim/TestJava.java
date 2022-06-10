@@ -2,6 +2,8 @@ package com.android.example.mim;
 
 import java.lang.System;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TestJava extends SuperTestJava {
     private double third;
@@ -46,6 +48,10 @@ public class TestJava extends SuperTestJava {
         int superInt = superFun();
         int superReturned = super.secondFunJava();
         return superReturned + superInt + 2;
+    }
+
+    public Map<Integer, List<String>> integerListMap() {
+        return integerListMap();
     }
 
     public static void staticFunc() {
