@@ -8,7 +8,7 @@ fun dotFun(superTest: SuperTest): Int {
 
 const val staticInt = 4
 
-class Test(val firstTest: String, var secondTest: Int, val wlMine: PowerManager.WakeLock): SuperTest(firstTest, secondTest, wlMine) {
+class Test(private val firstTest: String, var secondTest: Int, val wlMine: PowerManager.WakeLock): SuperTest(firstTest, secondTest, wlMine) {
     var third: Double = 1.0
 
     constructor(firstTest: String, secondTest: Int, third: Double, wlMine: PowerManager.WakeLock) : this(firstTest, secondTest, wlMine) {

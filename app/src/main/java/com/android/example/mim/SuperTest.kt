@@ -12,10 +12,12 @@ open class SuperTest(val first: String, var second: Int, val wlFieldParam: Power
 
     val protectedInt = MyDataStructure() to MyDataStructure("custom", 0)
 
+    fun getFirstM() = first
+
     open fun firstFun() {
         println("qwerty")
 //        val qwe = MyDataStructure().first.length
-
+        val dsad = getFirstM()
     }
 
     fun expressionBodyFunRef() = secondFun()
