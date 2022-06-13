@@ -1,8 +1,8 @@
 package com.android.example.igs;
 
-public class AIgsTestJava {
+public class IgsTestJava {
 
-    private String firstJava = "heh";
+    private String firstJava = "firstString";
     private int secondJava = 2;
 
     public String getFirstJava() {
