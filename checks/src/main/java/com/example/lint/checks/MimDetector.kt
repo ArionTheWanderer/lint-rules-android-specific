@@ -23,17 +23,6 @@ class MimDetector : Detector(), Detector.UastScanner {
         override fun visitMethod(node: UMethod) {
             val evaluator = context.evaluator
 
-//            val importList = PsiTreeUtil.findChildrenOfType(node.containingFile.toUElementOfType<UFile>()?.sourcePsi, KtImportList::class.java).elementAt(0)
-//            val importStartOffset = importList.startOffset
-//            val importEndOffset = importList.endOffset
-//            val importStartOffsetInParent = importList.startOffsetInParent
-//            val importStartOffsetInAncestor = importList.getStartOffsetIn(node.containingFile)
-//
-//            val classStartOffset = node.containingClass?.startOffset
-//            val classEndOffset = node.containingClass?.endOffset
-//            val classStartOffsetInParent = node.containingClass?.startOffsetInParent
-//            val classOffsetInAncestor = node.containingClass?.getStartOffsetIn(node.containingFile)
-
             val containingClass = node.javaPsi.containingClass
             val allFieldsNames =
                 containingClass?.allFields?.toList()?.stream()?.map { field -> field.name }
@@ -252,8 +241,6 @@ class MimDetector : Detector(), Detector.UastScanner {
         val lintFix: LintFix
         if (isJava(node.sourcePsi)) {
             val newMethodText = "static ${node.text}"
-//            val methodSignature = node.getSignature(PsiSubstitutor.EMPTY)
-//            val newMethodSignatureString = "static ${methodSignature.name}"
             lintFix =
                 fix()
                     .name("static modifier for ${node.name}")
@@ -269,11 +256,6 @@ class MimDetector : Detector(), Detector.UastScanner {
                 .at(node)
                 .fix(lintFix)
         } else if (isKotlin(node.sourcePsi)) {
-//            val importList = PsiTreeUtil.findChildrenOfType(node.containingFile.toUElementOfType<UFile>()?.sourcePsi, KtImportList::class.java).elementAt(0)
-//            val startOffset = importList.startOffsetInParent
-//            val dsd = importList.startOffset
-            // (node.containingFile) + 1
-//            context.getRangeLocation()
 
             lintFix =
                 fix()

@@ -25,8 +25,8 @@ import com.android.tools.lint.detector.api.CURRENT_API
 class SampleIssueRegistry : IssueRegistry() {
     override val issues = listOf(
 //        SampleCodeDetector.ISSUE,
-//        MimDetector.ISSUE_MEMBER_IGNORING_METHOD,
-//        DwDetector.ISSUE_DURABLE_WAKELOCK,
+        MimDetector.ISSUE_MEMBER_IGNORING_METHOD,
+        DwDetector.ISSUE_DURABLE_WAKELOCK,
         IdsDetector.ISSUE_INEFFICIENT_DATA_STRUCTURE,
         IsDetector.ISSUE_INTERNAL_SETTER,
         IgDetector.ISSUE_INTERNAL_GETTER,
