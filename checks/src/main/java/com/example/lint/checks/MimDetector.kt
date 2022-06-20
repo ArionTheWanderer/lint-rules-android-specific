@@ -274,7 +274,7 @@ class MimDetector : Detector(), Detector.UastScanner {
                             .replace()
                             .range(context.getLocation(node.containingFile))
                             .end()
-                            .with(node.sourcePsi?.text)
+                            .with("\n${node.sourcePsi?.text}")
                             .reformat(true)
                             .autoFix()
                             .build()

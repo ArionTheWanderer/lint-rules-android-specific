@@ -2,11 +2,13 @@ package com.example.lint.checks
 
 import com.android.tools.lint.client.api.UElementHandler
 import com.android.tools.lint.detector.api.*
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.uast.*
@@ -189,30 +191,137 @@ class LtDetector : Detector(), Detector.UastScanner {
     }
 
     private fun reportUsage(context: JavaContext, containingClass: UClass, threadField: UField) {
-//        val classMethods = containingClass.methods
-//        val leakingThreadFix: LintFix
-//
-//        if (isJava(threadField.sourcePsi)) {
-//
-//        } else if (isKotlin(threadField.sourcePsi)) {
-//
-//        } else throw IllegalArgumentException("Unsupported language")
-//
-//        val leakingThreadFix = fix()
-//            .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
-//            .family("Add threadField.interrupt() expression in onDestroy() method")
-//            .replace()
-//            .range(context.getLocation(getterInvocation))
-//            .all()
-//            .with(field.name)
-//            .reformat(true)
-//            .autoFix()
-//            .build()
+        var onDestroyMethod: UMethod? = null
+        val classMethods = containingClass.methods
+        for (method in classMethods) {
+            val doesNameMatch = method.name == ON_DESTROY_NAME
+            val hasNoParameters = method.uastParameters.isEmpty()
+            val isNotStatic = !method.isStatic
+            val isOverride = context.evaluator.isOverride(method)
+            val isVoidReturnType = method.returnType?.equalsToText(VOID) ?: false
+            val isNotConstructor = !method.isConstructor
+            if (
+                doesNameMatch && hasNoParameters &&
+                isNotStatic && isOverride &&
+                isVoidReturnType && isNotConstructor
+            ) {
+                onDestroyMethod = method
+                break
+            }
+        }
+
+        val leakingThreadFix: LintFix
+
+        if (isJava(threadField.sourcePsi)) {
+            val range: PsiElement?
+            if (onDestroyMethod != null) {
+                val lastExpression = (onDestroyMethod.uastBody as? UBlockExpression)?.expressions?.last()
+                if (lastExpression != null) {
+                    range = lastExpression.sourcePsi
+                    val threadInterruptExpression = "${threadField.name}.interrupt;"
+                    leakingThreadFix = fix()
+                        .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
+                        .family("Add threadField.interrupt() expression in onDestroy() method")
+                        .replace()
+                        .range(context.getLocation(range))
+                        .end()
+                        .with("\n$threadInterruptExpression")
+                        .reformat(true)
+                        .autoFix()
+                        .build()
+                } else {
+                    val onDestroyText = createOnDestroy("${threadField.name}.interrupt;")
+                    leakingThreadFix = fix()
+                        .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
+                        .family("Add threadField.interrupt() expression in onDestroy() method")
+                        .replace()
+                        .range(context.getLocation(onDestroyMethod))
+                        .all()
+                        .with(onDestroyText)
+                        .reformat(true)
+                        .autoFix()
+                        .build()
+                }
+            } else {
+                range = if (classMethods.isEmpty()) {
+                    containingClass.lBrace
+                } else {
+                    classMethods.last().sourcePsi
+                }
+
+                val onDestroyText = createOnDestroy("${threadField.name}.interrupt;")
+                leakingThreadFix = fix()
+                    .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
+                    .family("Add threadField.interrupt() expression in onDestroy() method")
+                    .replace()
+                    .range(context.getLocation(range))
+                    .end()
+                    .with("\n$onDestroyText")
+                    .reformat(true)
+                    .autoFix()
+                    .build()
+            }
+        } else if (isKotlin(threadField.sourcePsi)) {
+            val range: PsiElement?
+            if (onDestroyMethod != null) {
+                val lastExpression = (onDestroyMethod.uastBody as? UBlockExpression)?.expressions?.last()
+                if (lastExpression != null) {
+                    range = lastExpression.sourcePsi
+                    val threadInterruptExpression = "${threadField.name}.interrupt"
+                    leakingThreadFix = fix()
+                        .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
+                        .family("Add threadField.interrupt() expression in onDestroy() method")
+                        .replace()
+                        .range(context.getLocation(range))
+                        .end()
+                        .with("\n$threadInterruptExpression")
+                        .reformat(true)
+                        .autoFix()
+                        .build()
+                } else {
+                    val onDestroyText = createOnDestroyKt("${threadField.name}.interrupt")
+                    leakingThreadFix = fix()
+                        .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
+                        .family("Add threadField.interrupt() expression in onDestroy() method")
+                        .replace()
+                        .range(context.getLocation(onDestroyMethod))
+                        .all()
+                        .with(onDestroyText)
+                        .reformat(true)
+                        .autoFix()
+                        .build()
+                }
+            } else {
+                val ktClass = containingClass.sourcePsi as? KtClass
+                val lBrace = ktClass?.body?.lBrace
+
+                val onDestroyText: String
+                if (lBrace != null) {
+                    range = lBrace
+                    onDestroyText = createOnDestroyKt("${threadField.name}.interrupt")
+                } else if (ktClass != null) {
+                    range = ktClass
+                    onDestroyText = createOnDestroyKtWithBrackets("${threadField.name}.interrupt")
+                } else throw IllegalArgumentException("Body error")
+
+                leakingThreadFix = fix()
+                    .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
+                    .family("Add threadField.interrupt() expression in onDestroy() method")
+                    .replace()
+                    .range(context.getLocation(range))
+                    .end()
+                    .with("\n$onDestroyText")
+                    .reformat(true)
+                    .autoFix()
+                    .build()
+            }
+        } else throw IllegalArgumentException("Unsupported language")
+
 
         val incident = Incident(context, ISSUE_LEAKING_THREAD)
             .message("Thread field ${threadField.name} is started and not interrupted.")
             .at(threadField)
-//            .fix(leakingThreadFix)
+            .fix(leakingThreadFix)
         context.report(incident)
     }
 
@@ -225,18 +334,26 @@ class LtDetector : Detector(), Detector.UastScanner {
             ConstantHolder.ANDROID_QUALITY_SMELLS, 5, Severity.WARNING,
             Implementation(LtDetector::class.java, Scope.JAVA_FILE_SCOPE)
         )
+        private const val VOID = "void"
         private const val ACTIVITY = "android.app.Activity"
         private const val THREAD = "java.lang.Thread"
         private const val START = "start"
         private const val START_KT = "start()"
         private const val INTERRUPT = "interrupt"
         private const val INTERRUPT_KT = "interrupt()"
-        private const val ON_DESTROY = """@Override
-                                         .protected void onDestroy() {
-                                         .    super.onDestroy();
-                                         .}"""
-        private const val ON_DESTROY_KT = """override fun onDestroy() {
-                                            .    super.onDestroy()
-                                            .}"""
+        private const val ON_DESTROY_NAME = "onDestroy"
+        private fun createOnDestroy(expression: String) = """@Override
+                                                            .protected void onDestroy() {
+                                                            .    super.onDestroy();
+                                                            .    $expression
+                                                            .}""".trimMargin(".")
+        private fun createOnDestroyKt(expression: String) = """override fun onDestroy() {
+                                                              .    super.onDestroy()
+                                                              .    $expression
+                                                              .}""".trimMargin(".")
+        private fun createOnDestroyKtWithBrackets(expression: String) = """{override fun onDestroy() {
+                                                              .    super.onDestroy()
+                                                              .    $expression
+                                                              .}}""".trimMargin(".")
     }
 }
