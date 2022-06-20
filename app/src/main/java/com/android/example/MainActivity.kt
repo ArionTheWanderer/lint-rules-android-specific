@@ -33,6 +33,10 @@ class MainActivity : AppCompatActivity() {
         wl1.acquire()
     }
 
+    override fun onLowMemory() {
+        super.onLowMemory()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         wl1.release()
