@@ -38,7 +38,6 @@ class LtDetector : Detector(), Detector.UastScanner {
                     if (isStartedButNotInterrupted(node, threadField)) {
                         reportUsage(context, node, threadField)
                     }
-                    println("")
                 }
             }
 

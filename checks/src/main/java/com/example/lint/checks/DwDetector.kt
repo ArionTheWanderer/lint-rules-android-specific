@@ -165,7 +165,7 @@ class DwDetector : Detector(), Detector.UastScanner {
                             continue
                         }
                         methodCall.toUElementOfType<UCallExpression>()
-                            ?.let { reportUsage(context, it, node) } ?: println("Can't cast $callName method to UCallExpression")
+                            ?.let { reportUsage(context, it, node) }
                     } else if (wlParameter != null) {
 
                         if (!callName.equals(ACQUIRE)) {
@@ -220,7 +220,7 @@ class DwDetector : Detector(), Detector.UastScanner {
                             continue
                         }
                         methodCall.toUElementOfType<UCallExpression>()
-                            ?.let { reportUsage(context, it, node) } ?: println("Can't cast $callName method to UCallExpression")
+                            ?.let { reportUsage(context, it, node) }
                     } else {
                         continue
                     }
@@ -365,7 +365,7 @@ class DwDetector : Detector(), Detector.UastScanner {
                             }
 
                             callExpression.toUElementOfType<UCallExpression>()
-                                ?.let { reportUsage(context, it, node) } ?: println("Can't cast $callName method to UCallExpression")
+                                ?.let { reportUsage(context, it, node) }
                         } else if (isInClass) {
                             val clazz = node.containingClass?.toUElementOfType<UClass>()?.qualifiedName ?: continue
                             val wlFieldStructure = wlFieldsMap[clazz]?.get(sourceName)

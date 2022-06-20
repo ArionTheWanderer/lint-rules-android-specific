@@ -19,7 +19,6 @@ class IdsDetector : Detector(), Detector.UastScanner {
             for (field in fields) {
                 val fieldClassType = field.type.accept(IdsTypeVisitor()) ?: continue
                 reportUsage(context, field)
-                println("Field")
             }
         }
 
@@ -34,13 +33,11 @@ class IdsDetector : Detector(), Detector.UastScanner {
                     if (localVarUElement != null) {
                         reportUsage(context, localVarUElement)
                     }
-                    println("LocalVarJava")
                 }
                 for (param in params) {
                     val paramClassType = param.type.accept(IdsTypeVisitor()) ?: continue
 
                     reportUsage(context, param)
-                    println("ParamJava")
                 }
                 val returnClassType = returnType?.accept(IdsTypeVisitor())
                 if (returnClassType != null) {
@@ -48,7 +45,6 @@ class IdsDetector : Detector(), Detector.UastScanner {
                     if (returnTypeElement != null) {
                         reportUsage(context, returnTypeElement)
                     }
-                    println("ReturnType")
                 }
             } else if (isKotlin(node.sourcePsi)) {
                 val uField = node.sourcePsi.toUElementOfType<UField>()
@@ -62,12 +58,10 @@ class IdsDetector : Detector(), Detector.UastScanner {
                     val localUVar = localVar.toUElementOfType<UVariable>()
                     val localVarClassType = localUVar?.type?.accept(IdsTypeVisitor()) ?: continue
                     reportUsage(context, localUVar)
-                    println("LocalVar")
                 }
                 for (param in params) {
                     val paramClassType = param.type.accept(IdsTypeVisitor()) ?: continue
                     reportUsage(context, param)
-                    println("Param")
                 }
                 val returnClassType = returnType?.accept(IdsTypeVisitor())
                 if (returnClassType != null) {
@@ -75,7 +69,6 @@ class IdsDetector : Detector(), Detector.UastScanner {
                     if (returnTypeElement != null) {
                         reportUsage(context, returnTypeElement)
                     }
-                    println("ReturnType")
                 }
             }
         }
