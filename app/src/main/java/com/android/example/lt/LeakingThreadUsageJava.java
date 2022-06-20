@@ -8,7 +8,6 @@ public class LeakingThreadUsageJava extends Activity {
     private Thread threadField;
     private Thread threadField2;
     private Thread threadField3;
-    private Thread threadField4 = new Thread();
 
 
     @Override
@@ -19,7 +18,6 @@ public class LeakingThreadUsageJava extends Activity {
         threadField.start();
         threadField2.start();
         threadField3.start();
-        threadField4.start();
     }
 
     @Override
