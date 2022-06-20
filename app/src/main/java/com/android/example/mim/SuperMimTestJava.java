@@ -41,7 +41,7 @@ public class SuperMimTestJava {
         return superFunVar;
     }
 
-    class MyDataStructure {
+    static class MyDataStructure {
         public int firstInt = 2;
         public String secondString = "ds";
 

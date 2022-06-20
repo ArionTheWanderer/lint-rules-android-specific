@@ -11,7 +11,7 @@ open class SuperTest(val first: String, var second: Int) {
 
 
     open fun firstFun() {
-        println("qwerty")
+        println(first)
     }
 
     fun expressionBodyFunRef() = secondFun()
