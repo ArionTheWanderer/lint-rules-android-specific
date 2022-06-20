@@ -1,17 +1,15 @@
 package com.android.example.mim
 
-import android.os.PowerManager
-
 fun dotFun(superTest: SuperTest): Int {
     return superTest.protectedInt.first.first.length
 }
 
 const val staticInt = 4
 
-class Test(private val firstTest: String, var secondTest: Int, val wlMine: PowerManager.WakeLock): SuperTest(firstTest, secondTest, wlMine) {
+class Test(private val firstTest: String, var secondTest: Int): SuperTest(firstTest, secondTest) {
     var third: Double = 1.0
 
-    constructor(firstTest: String, secondTest: Int, third: Double, wlMine: PowerManager.WakeLock) : this(firstTest, secondTest, wlMine) {
+    constructor(firstTest: String, secondTest: Int, third: Double) : this(firstTest, secondTest) {
         this.third = third
     }
 

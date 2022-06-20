@@ -37,13 +37,6 @@ public class MimTestJava extends SuperMimTestJava {
         HashMap   < Integer, Object > hm = new HashMap<>();
     }
 
-//    public void firstFunJava() {
-//        String superStringLocal = superString;
-//        String newString = superString + "New";
-//        this.third += 1.0D;
-//        super.firstFunJava();
-//    }
-
     public int secondFunJava() {
         int superInt = superFun();
         int superReturned = super.secondFunJava();

@@ -1,6 +1,5 @@
 package com.android.example.mim;
 
-import android.os.PowerManager;
 
 public class SuperMimTestJava {
     protected MyDataStructure myDataStructure = new MyDataStructure();
