@@ -27,7 +27,7 @@ class SampleIssueRegistry : IssueRegistry() {
         IsDetector.ISSUE_INTERNAL_SETTER,
         IgDetector.ISSUE_INTERNAL_GETTER,
         NlmrDetector.ISSUE_NO_LOW_MEMORY_RESOLVER,
-//        LtDetector.ISSUE_LEAKING_THREAD
+        LtDetector.ISSUE_LEAKING_THREAD
     )
 
     override val api: Int

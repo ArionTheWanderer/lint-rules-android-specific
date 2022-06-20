@@ -218,7 +218,7 @@ class LtDetector : Detector(), Detector.UastScanner {
                 val lastExpression = (onDestroyMethod.uastBody as? UBlockExpression)?.expressions?.last()
                 if (lastExpression != null) {
                     range = lastExpression.sourcePsi
-                    val threadInterruptExpression = "${threadField.name}.interrupt;"
+                    val threadInterruptExpression = "${threadField.name}.interrupt();"
                     leakingThreadFix = fix()
                         .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
                         .family("Add threadField.interrupt() expression in onDestroy() method")
@@ -230,7 +230,7 @@ class LtDetector : Detector(), Detector.UastScanner {
                         .autoFix()
                         .build()
                 } else {
-                    val onDestroyText = createOnDestroy("${threadField.name}.interrupt;")
+                    val onDestroyText = createOnDestroy("${threadField.name}.interrupt();")
                     leakingThreadFix = fix()
                         .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
                         .family("Add threadField.interrupt() expression in onDestroy() method")
@@ -249,7 +249,7 @@ class LtDetector : Detector(), Detector.UastScanner {
                     classMethods.last().sourcePsi
                 }
 
-                val onDestroyText = createOnDestroy("${threadField.name}.interrupt;")
+                val onDestroyText = createOnDestroy("${threadField.name}.interrupt();")
                 leakingThreadFix = fix()
                     .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
                     .family("Add threadField.interrupt() expression in onDestroy() method")
@@ -267,7 +267,7 @@ class LtDetector : Detector(), Detector.UastScanner {
                 val lastExpression = (onDestroyMethod.uastBody as? UBlockExpression)?.expressions?.last()
                 if (lastExpression != null) {
                     range = lastExpression.sourcePsi
-                    val threadInterruptExpression = "${threadField.name}.interrupt"
+                    val threadInterruptExpression = "${threadField.name}.interrupt()"
                     leakingThreadFix = fix()
                         .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
                         .family("Add threadField.interrupt() expression in onDestroy() method")
@@ -279,7 +279,7 @@ class LtDetector : Detector(), Detector.UastScanner {
                         .autoFix()
                         .build()
                 } else {
-                    val onDestroyText = createOnDestroyKt("${threadField.name}.interrupt")
+                    val onDestroyText = createOnDestroyKt("${threadField.name}.interrupt()")
                     leakingThreadFix = fix()
                         .name("Add ${threadField.name}.interrupt() expression in onDestroy() method")
                         .family("Add threadField.interrupt() expression in onDestroy() method")
@@ -298,10 +298,10 @@ class LtDetector : Detector(), Detector.UastScanner {
                 val onDestroyText: String
                 if (lBrace != null) {
                     range = lBrace
-                    onDestroyText = createOnDestroyKt("${threadField.name}.interrupt")
+                    onDestroyText = createOnDestroyKt("${threadField.name}.interrupt()")
                 } else if (ktClass != null) {
                     range = ktClass
-                    onDestroyText = createOnDestroyKtWithBrackets("${threadField.name}.interrupt")
+                    onDestroyText = createOnDestroyKtWithBrackets("${threadField.name}.interrupt()")
                 } else throw IllegalArgumentException("Body error")
 
                 leakingThreadFix = fix()
