@@ -22,9 +22,7 @@ public class SuperMimTestJava {
         this.second = second;
     }
 
-    int firstFunJava(PowerManager.WakeLock wl) {
-        wl.acquire(10*60*1000L /*10 minutes*/);
-        wl.release();
+    int firstFunJava() {
         myDataStructure.test();
         return 3;
     }
