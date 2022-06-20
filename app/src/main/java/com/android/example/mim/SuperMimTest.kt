@@ -16,7 +16,6 @@ open class SuperTest(val first: String, var second: Int, val wlFieldParam: Power
 
     open fun firstFun() {
         println("qwerty")
-//        val qwe = MyDataStructure().first.length
         val dsad = getFirstM()
     }
 

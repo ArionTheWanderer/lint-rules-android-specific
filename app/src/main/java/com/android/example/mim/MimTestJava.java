@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TestJava extends SuperTestJava {
+public class MimTestJava extends SuperMimTestJava {
     private double third;
 
     public static int staticInt = 4;
@@ -14,24 +14,24 @@ public class TestJava extends SuperTestJava {
         return param + "";
     }
 
-    public int dotFunJava(SuperTestJava superTestJava) {
-        superTestJava.myDataStructure.secondString.toLowerCase();
-        superTestJava.superString.toLowerCase().charAt(2);
+    public int dotFunJava(SuperMimTestJava superMimTestJava) {
+        superMimTestJava.myDataStructure.secondString.toLowerCase();
+        superMimTestJava.superString.toLowerCase().charAt(2);
         System.out.println();
         return myDataStructure.firstInt;
     }
 
 
-    public int dotFunJava2(SuperTestJava superTestJava) {
+    public int dotFunJava2(SuperMimTestJava superMimTestJava) {
         myDataStructure.secondString.toLowerCase();
         return myDataStructure.firstInt;
     }
 
-    TestJava(String firstTest, int secondTest) {
+    MimTestJava(String firstTest, int secondTest) {
         super(firstTest, secondTest);
     }
 
-    TestJava(String firstTest, int secondTest, double third) {
+    MimTestJava(String firstTest, int secondTest, double third) {
         this(firstTest, secondTest);
         this.third = third;
         HashMap   < Integer, Object > hm = new HashMap<>();

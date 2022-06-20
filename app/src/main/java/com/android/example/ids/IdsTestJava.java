@@ -1,4 +1,4 @@
-package com.android.example.aids;
+package com.android.example.ids;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,11 +7,7 @@ public class IdsTestJava {
     public Map<Integer, Object> hashMap = new HashMap<>();
 
     public Map<Integer, Object> idsJava(HashMap<Integer, Object> param) {
-        Map<Integer, IdsClassJava> localVarJava = new HashMap<>();
+        Map<Integer, Object> localVarJava = new HashMap<>();
         return param;
-    }
-
-    static class IdsClassJava {
-
     }
 }

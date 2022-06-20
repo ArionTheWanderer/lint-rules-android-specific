@@ -291,13 +291,6 @@ class MimDetector : Detector(), Detector.UastScanner {
         context.report(incident)
     }
 
-//    private fun reportUsage(context: JavaContext, node: UMethod, debugMessage: String) {
-//        val incident = Incident(context, ISSUE_MEMBER_IGNORING_METHOD)
-//            .message(debugMessage)
-//            .at(node)
-//        context.report(incident)
-//    }
-
     companion object {
         @JvmField
         val ISSUE_MEMBER_IGNORING_METHOD = Issue.create(

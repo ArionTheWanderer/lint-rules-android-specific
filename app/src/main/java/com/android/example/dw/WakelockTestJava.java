@@ -24,9 +24,6 @@ public class WakelockTestJava {
     }
 
     public void wlLocalFun() {
-//        Wakelock wlLocal = new Wakelock();
-//        wlLocal.acquire(); //?
-
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wlLocal = pm.newWakeLock(
                 PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "myapp:mywltag"
@@ -36,10 +33,6 @@ public class WakelockTestJava {
 
 
     public void wlLocalReleaseFun() {
-//        Wakelock wlLocal = new Wakelock();
-//        wlLocal.acquire();
-//        wlLocal.release();
-
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wlLocal = pm.newWakeLock(
                 PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE, "myapp:mywltag"

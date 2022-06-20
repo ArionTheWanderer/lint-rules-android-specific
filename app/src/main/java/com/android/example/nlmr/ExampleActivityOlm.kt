@@ -1,10 +1,10 @@
-package com.android.example.anlmr
+package com.android.example.nlmr
 
 import android.app.Activity
 import android.os.Bundle
 import java.io.Serializable
 
-class ExampleActivityOlm : Activity(), Serializable {
+class ExampleActivityOlm : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }

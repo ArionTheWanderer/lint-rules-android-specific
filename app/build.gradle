@@ -24,11 +24,11 @@ android {
     lintOptions {
         checkDependencies true
         textReport true
-        checkOnly 'Internal Getter', 'Internal Setter', 'Durable Wakelock', 'Inefficient data structure', 'Member-ignoring method', 'No Low Memory Resolver'
+        checkOnly 'Internal Getter', 'Internal Setter', 'Durable Wakelock', 'Inefficient data structure', 'Member-ignoring method', 'No Low Memory Resolver', 'Leaking Thread'
 
         // Produce report for CI:
         // https://docs.github.com/en/github/finding-security-vulnerabilities-and-errors-in-your-code/sarif-support-for-code-scanning
-        sarifOutput file("../lint-results.sarif")
+//        sarifOutput file("../lint-results.sarif")
     }
 }
 

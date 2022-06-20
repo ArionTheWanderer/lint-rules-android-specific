@@ -1,4 +1,4 @@
-package com.android.example.anlmr;
+package com.android.example.nlmr;
 
 import android.support.v4.app.FragmentActivity;
 

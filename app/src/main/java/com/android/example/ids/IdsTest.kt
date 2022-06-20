@@ -1,4 +1,4 @@
-package com.android.example.aids
+package com.android.example.ids
 
 class IdsTest {
     val hashmap = mapOf<Int, Any>()
@@ -9,9 +9,4 @@ class IdsTest {
     }
 
     data class IdsClass(val string: String = "")
-
-//    fun ids2(param: MutableMap<Int, Any>): Map<Int, Any> {
-//        val localVar = hashMapOf<Int, Object>()
-//        return param
-//    }
 }

@@ -2,7 +2,7 @@ package com.android.example.mim;
 
 import android.os.PowerManager;
 
-public class SuperTestJava {
+public class SuperMimTestJava {
     protected MyDataStructure myDataStructure = new MyDataStructure();
     private String first;
     private int second;
@@ -17,7 +17,7 @@ public class SuperTestJava {
         System.out.println("wqewq");
     }
 
-    SuperTestJava(String first, int second) {
+    SuperMimTestJava(String first, int second) {
         this.first = first;
         this.second = second;
     }
